@@ -1,11 +1,14 @@
 from build_connection import BuildConnection
-import re
-db = BuildConnection()
 
+db = BuildConnection()
 class Student:
 
-    def __init__(self):
-        self.conn, self.cursor = db.make_connection()
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
 
     def register_student(self, stud_id, stud_name,year,course_id, email=None):
         try:
@@ -113,10 +116,14 @@ class Student:
 
 class Users:
 
-    def __init__(self):
-        self.conn, self.cursor = db.make_connection()
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
 
-    def regiter_user(self, user_id, user_name, role, email = None):
+    def register_user(self, user_id, user_name, role, email = None):
         try:
             query = "SELECT * FROM users WHERE user_id = %s;"
             self.cursor.execute(query, (user_id,))
@@ -231,8 +238,12 @@ class Users:
 
 class Course:
 
-    def __init__(self):
-        self.conn, self.cursor = db.make_connection()
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
 
     def register_course(self, course_id, course_name):
         try:
@@ -351,8 +362,12 @@ class Course:
 
 class Module:
 
-    def __init__(self):
-        self.conn, self.cursor = db.make_connection()
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
     
     def register_module(self, mod_id, mod_name, course_id, year, welfare_staff_id, module_staff_id):
         try:
@@ -477,18 +492,22 @@ class Module:
     
 class Deadlines:
 
-    def __init__(self):
-        self.conn, self.cursor = db.make_connection()
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
 
-    def set_deadline(self, dead_id, mod_id, week_no, due_date, ass_name = None):
+    def set_deadlines(self, dead_id, mod_id, week_no, due_date, ass_name = None):
         try:
-            query = "SELECT * FROM deadline WHERE dead_id = %s;"
+            query = "SELECT * FROM deadlines WHERE dead_id = %s;"
             self.cursor.execute(query, (dead_id,))
             existing = self.cursor.fetchone()
 
             if existing is None:
-                query = "INSERT INTO module (mod_id, mod_name, course_id, year, welfare_staff_id, module_staff_id) VALUES (%s, %s, %s, %s, %s, %s);"
-                self.cursor.execute(query, (dead_id, mod_id, mod_id, week_no,ass_name, due_date))
+                query = "INSERT INTO deadlines (dead_id, mod_id, week_no, due_date, ass_name) VALUES (%s, %s, %s, %s, %s);"
+                self.cursor.execute(query, (dead_id, mod_id, week_no,ass_name, due_date))
                 self.conn.commit()
                 print("Deadline set successfully!")
             else:
@@ -508,7 +527,7 @@ class Deadlines:
 
     def get_deadline_by_dead_id(self,dead_id):
         try:
-            query = "SELECT * FROM deadline WHERE dead_id = %s;"
+            query = "SELECT * FROM deadlines WHERE dead_id = %s;"
             self.cursor.execute(query,(dead_id,))
             deadline = self.cursor.fetchone()
             if deadline:
@@ -520,7 +539,7 @@ class Deadlines:
     
     def get_deadline_by_mod_id(self,mod_id):
         try:
-            query = "SELECT * FROM deadline WHERE mod_id = %s;"
+            query = "SELECT * FROM deadlines WHERE mod_id = %s;"
             self.cursor.execute(query,(mod_id,))
             deadlines = self.cursor.fetchall()
             if deadlines:
@@ -533,7 +552,7 @@ class Deadlines:
     
     def get_deadline_by_week_no(self,week_no):
         try:
-            query = "SELECT * FROM deadline WHERE week_no = %s;"
+            query = "SELECT * FROM deadlines WHERE week_no = %s;"
             self.cursor.execute(query,(week_no,))
             deadlines = self.cursor.fetchall()
             if deadlines:
@@ -546,7 +565,7 @@ class Deadlines:
 
     def get_deadline_by_ass_name(self,ass_name):
         try:
-            query = "SELECT * FROM deadline WHERE ass_name = %s;"
+            query = "SELECT * FROM deadlines WHERE ass_name = %s;"
             self.cursor.execute(query,(ass_name,))
             deadlines = self.cursor.fetchall()
             if deadlines:
@@ -559,7 +578,7 @@ class Deadlines:
 
     def get_deadline_by_due_date(self, due_date):
         try:
-            query = "SELECT * FROM deadline WHERE due_date = %s;"
+            query = "SELECT * FROM deadlines WHERE due_date = %s;"
             self.cursor.execute(query,(due_date,))
             deadlines = self.cursor.fetchall()
             if deadlines:
