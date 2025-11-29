@@ -1,6 +1,6 @@
 from build_connection import BuildConnection
-
 db = BuildConnection()
+
 class Student:
 
     def __init__(self, conn=None, cursor=None):
@@ -103,7 +103,6 @@ class Student:
         except Exception as e:
             print("ERROR: ", e)
     
-
 class Users:
 
     def __init__(self, conn=None, cursor=None):
@@ -781,6 +780,7 @@ class attendance:
             print("ERROR: ", e)
     
 class Surveys:
+
     def __init__(self, conn=None, cursor=None):
         if conn and cursor:
             self.conn = conn
@@ -924,3 +924,23 @@ class Surveys:
         except Exception as e:
             print("ERROR: ", e)
 
+class ModuleStaff:
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
+    
+    def student_attendance(self):
+        try:
+            query = "SELECT (stud_id,att_per) FROM attendance;"
+            self.cursor.execute(query)
+            module_staff_view = self.cursor.fetchall()
+            if module_staff_view:
+                for module_staff in module_staff_view:
+                    print("Module Staff Found!: ", module_staff)
+            else:
+                print("Module Staff Not Found!")
+        except Exception as e:
+            print("ERROR: ", e)
