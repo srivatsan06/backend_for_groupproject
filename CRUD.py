@@ -492,24 +492,15 @@ class Deadlines:
         else:
             self.conn, self.cursor = db.make_connection()
 
-    def set_deadlines(self, mod_id, week_no, due_date, ass_name="Assessment"):
+    def set_deadlines(self, dead_id, mod_id, week_no, due_date, ass_name="Assessment"):
         try:
-            date_parts = str(due_date).split('-')
-            if len(date_parts) == 3:
-                day = date_parts[2]
-                month = date_parts[1]
-                dead_id = f"{mod_id}{week_no:02d}{day}{month}"
-            else:
-                print("Invalid date format! Use YYYY-MM-DD")
-                return
-
             query = "SELECT 1 FROM deadlines WHERE dead_id = %s;"
             self.cursor.execute(query, (dead_id,))
             existing = self.cursor.fetchone()
 
             if existing is None:
-                query = "INSERT INTO deadlines (dead_id, mod_id, week_no, due_date, ass_name) VALUES (%s, %s, %s, %s, %s);"
-                self.cursor.execute(query, (dead_id, mod_id, week_no, due_date, ass_name))
+                query = "INSERT INTO deadlines (dead_id, mod_id, week_no, ass_name, due_date) VALUES (%s, %s, %s, %s, %s);"
+                self.cursor.execute(query, (dead_id, mod_id, week_no, ass_name, due_date))
                 self.conn.commit()
                 print("Deadline set successfully!")
             else:
@@ -645,10 +636,10 @@ class Deadlines:
     
     def del_deadline_info(self, dead_id, col_name):
         try:
-            allowed_cols = ["dead_id", "mod_id", "week_no", "ass_name", "due_date"]
+            allowed_cols = ["mod_id", "week_no", "ass_name", "due_date"]
             if col_name not in allowed_cols:
-                print("Column not found !!")
-                return
+                raise ValueError("Column not found !!")
+
 
             query = f"UPDATE deadlines SET `{col_name}` = NULL WHERE `dead_id` = %s;"
             self.cursor.execute(query, (dead_id,))
@@ -665,12 +656,23 @@ class Deadlines:
         try:
             allowed_cols = ["dead_id", "mod_id", "week_no", "ass_name", "due_date"]
             if update_col not in allowed_cols:
-                print("Column not found !!")
-                return
+                raise ValueError("Column not found !!")
 
-            query = f"UPDATE deadlines SET `{update_col}` = %s WHERE `dead_id` = %s;"
-            self.cursor.execute(query, (new_var, dead_id))
-            self.conn.commit()
+            if update_col == "dead_id":
+                query = "SELECT dead_id FROM deadlines WHERE dead_id = %s;"
+                self.cursor.execute(query, (new_var,))
+                existing = self.cursor.fetchone()
+                if existing:
+                    raise ValueError("Deadline ID already exists and duplicates are not allowed!!")
+                else:
+                    query = "UPDATE deadlines SET `dead_id` = %s WHERE `dead_id` = %s;"
+                    self.cursor.execute(query, (new_var, dead_id))
+                    self.conn.commit()
+
+            else:        
+                query = f"UPDATE deadlines SET `{update_col}` = %s WHERE `dead_id` = %s;"
+                self.cursor.execute(query, (new_var, dead_id))
+                self.conn.commit()
 
             if self.cursor.rowcount > 0:
                 print("Deadline info updated successfully!")
