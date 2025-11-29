@@ -10,15 +10,15 @@ class Student:
         else:
             self.conn, self.cursor = db.make_connection()
 
-    def register_student(self, stud_id, stud_name,year,course_id, email=None):
+    def register_student(self, stud_id, stud_name, year, course_id, hash_pass, email=None):
         try:
-            query = "SELECT * FROM student WHERE stud_id = %s;"
+            query = "SELECT stud_id FROM student WHERE stud_id = %s;"
             self.cursor.execute(query, (stud_id,))
             existing = self.cursor.fetchone()
 
             if existing is None:
-                query = "INSERT INTO student (stud_id, stud_name, year, email, course_id) VALUES (%s, %s, %s, %s, %s);"
-                self.cursor.execute(query, (stud_id, stud_name, year, email, course_id))
+                query = "INSERT INTO student (stud_id, stud_name, year, email, course_id, hash_pass) VALUES (%s, %s, %s, %s, %s, %s);"
+                self.cursor.execute(query, (stud_id, stud_name, year, email, course_id, hash_pass))
                 self.conn.commit()
                 print("Student registered successfully!")
             else:
@@ -113,15 +113,15 @@ class Users:
         else:
             self.conn, self.cursor = db.make_connection()
 
-    def register_user(self, user_id, user_name, role, email = None):
+    def register_user(self, user_id, user_name, role, hash_pass, email=None):
         try:
-            query = "SELECT * FROM users WHERE user_id = %s;"
+            query = "SELECT user_id FROM users WHERE user_id = %s;"
             self.cursor.execute(query, (user_id,))
             existing = self.cursor.fetchone()
 
             if existing is None:
-                query = "INSERT INTO users (user_id, user_name, role, email) VALUES (%s, %s, %s);"
-                self.cursor.execute(query, (user_id, user_name, role, email))
+                query = "INSERT INTO users (user_id, user_name, role, email, hash_pass) VALUES (%s, %s, %s, %s, %s);"
+                self.cursor.execute(query, (user_id, user_name, role, email, hash_pass))
                 self.conn.commit()
                 print("User registered successfully!")
             else:
@@ -228,7 +228,7 @@ class Course:
 
     def register_course(self, course_id, course_name):
         try:
-            query = "SELECT * FROM course WHERE course_id = %s;"
+            query = "SELECT course_id FROM course WHERE course_id = %s;"
             self.cursor.execute(query, (course_id,))
             existing = self.cursor.fetchone()
 
@@ -340,7 +340,7 @@ class Module:
     
     def register_module(self, mod_id, mod_name, course_id, year, welfare_staff_id, module_staff_id):
         try:
-            query = "SELECT * FROM module WHERE mod_id = %s;"
+            query = "SELECT mod_id FROM module WHERE mod_id = %s;"
             self.cursor.execute(query, (mod_id,))
             existing = self.cursor.fetchone()
 
@@ -492,210 +492,24 @@ class Deadlines:
         else:
             self.conn, self.cursor = db.make_connection()
 
-    def set_deadlines(self, dead_id, mod_id, week_no, due_date, ass_name = None):
+    def set_deadlines(self, mod_id, week_no, due_date, ass_name="Assessment"):
         try:
-            query = "SELECT * FROM deadlines WHERE dead_id = %s;"
+            date_parts = str(due_date).split('-')
+            if len(date_parts) == 3:
+                day = date_parts[2]
+                month = date_parts[1]
+                dead_id = f"{mod_id}{week_no:02d}{day}{month}"
+            else:
+                print("Invalid date format! Use YYYY-MM-DD")
+                return
+
+            query = "SELECT 1 FROM deadlines WHERE dead_id = %s;"
             self.cursor.execute(query, (dead_id,))
             existing = self.cursor.fetchone()
 
             if existing is None:
                 query = "INSERT INTO deadlines (dead_id, mod_id, week_no, due_date, ass_name) VALUES (%s, %s, %s, %s, %s);"
-                self.cursor.execute(query, (dead_id, mod_id, week_no,ass_name, due_date))
-                self.conn.commit()
-                print("Deadline set successfully!")
-            else:
-                print("Deadline already set!")
-        except Exception as e:
-            print("ERROR: ", e)
-    
-    def get_deadlines(self):
-        try:
-            query = "SELECT * FROM deadlines;"
-            self.cursor.execute(query)
-            deadlines = self.cursor.fetchall()
-            for deadline in deadlines:
-                print(deadline)
-        except Exception as e:
-            print("ERROR: ", e)
-
-    def get_deadline_by_dead_id(self,dead_id):
-        try:
-            query = "SELECT * FROM deadlines WHERE dead_id = %s;"
-            self.cursor.execute(query,(dead_id,))
-            deadline = self.cursor.fetchone()
-            if deadline:
-                print("Deadline Found!: ", deadline)     
-            else:
-                print(f"Deadline Not Found for the id: {dead_id}!!")       
-        except Exception as e:
-            print("ERROR:",e)
-    
-    def get_deadline_by_mod_id(self,mod_id):
-        try:
-            query = "SELECT * FROM deadlines WHERE mod_id = %s;"
-            self.cursor.execute(query,(mod_id,))
-            deadlines = self.cursor.fetchall()
-            if deadlines:
-                for deadline in deadlines:
-                    print("Deadline Found!: ", deadline)     
-            else:
-                print(f"Deadline Not Found for the module id: {mod_id}!!")    
-        except Exception as e:
-            print("ERROR:",e)
-    
-    def get_deadline_by_week_no(self,week_no):
-        try:
-            query = "SELECT * FROM deadlines WHERE week_no = %s;"
-            self.cursor.execute(query,(week_no,))
-            deadlines = self.cursor.fetchall()
-            if deadlines:
-                for deadline in deadlines:
-                    print("Deadline Found!: ", deadline)     
-            else:
-                print(f"Deadline Not Found for the week no: {week_no}!!")    
-        except Exception as e:
-            print("ERROR:",e)
-
-    def get_deadline_by_ass_name(self,ass_name):
-        try:
-            query = "SELECT * FROM deadlines WHERE ass_name = %s;"
-            self.cursor.execute(query,(ass_name,))
-            deadlines = self.cursor.fetchall()
-            if deadlines:
-                for deadline in deadlines:
-                    print("Deadline Found!: ", deadline)     
-            query = "SELECT * FROM module WHERE mod_name = %s;"
-            self.cursor.execute(query, (mod_name,))
-            modules = self.cursor.fetchall()
-            if modules is None:
-                print("Module name not found!")
-                return
-            for module in modules:
-                print(module)
-        except Exception as e:
-            print("ERROR: ", e)
-
-    def get_module_by_course_id(self, course_id):
-        try:
-            query = "SELECT * FROM module WHERE course_id = %s;"
-            self.cursor.execute(query, (course_id,))
-            modules = self.cursor.fetchall()
-            if modules is None:
-                print("Module id not found!")
-                return
-            for module in modules:
-                print(module)
-        except Exception as e:
-            print("ERROR: ", e) 
-    
-    def get_module_by_year(self, year):
-        try:
-            query = "SELECT * FROM module WHERE year = %s;"
-            self.cursor.execute(query, (year,))
-            modules = self.cursor.fetchall()
-            if modules is None:
-                print("Module year not found!")
-                return
-            for module in modules:
-                print(module)
-        except Exception as e:
-            print("ERROR: ", e)     
-
-    def get_all_modules(self):
-        try:
-            query = "SELECT * FROM module;"
-            self.cursor.execute(query)
-            modules = self.cursor.fetchall()
-            for module in modules:
-                print(module)
-        except Exception as e:
-            print("ERROR: ", e)
-    
-    def del_module_by_id(self,mod_id):
-        try:
-            query = "DELETE FROM module WHERE `mod_id` = %s;"
-            self.cursor.execute(query, (mod_id,))
-            self.conn.commit()
-
-            if self.cursor.rowcount > 0:
-                print("Module info deleted successfully!")
-            else:
-                print("Module not found!")
-        except Exception as e:
-            print("ERROR: ", e)
-
-    def del_module_by_name(self,mod_name):
-        try:
-            query = "DELETE FROM module WHERE `mod_name` = %s;"
-            self.cursor.execute(query, (mod_name,))
-            self.conn.commit()
-
-            if self.cursor.rowcount > 0:
-                print("Module info deleted successfully!")
-            else:
-                print("Module not found!")
-        except Exception as e:
-            print("ERROR: ", e)
-    
-    def del_module_info(self, mod_id, col_name):
-
-        if col_name not in ["mod_name", "course_id", "year", "welfare_staff_id", "module_staff_id"]:
-            raise ValueError("Invalid column name!")
-        try:
-            query = "SELECT * FROM module WHERE mod_id = %s;"
-            self.cursor.execute(query, (mod_id,))
-            existing = self.cursor.fetchone()
-
-            if existing:
-                query = f"UPDATE module SET `{col_name}` = NULL WHERE `mod_id` = %s;"
-                self.cursor.execute(query, (mod_id,))
-                self.conn.commit()
-                print("Module info cleared successfully!")
-                print("Module not found!")
-        except Exception as e:
-            print("ERROR: ", e)
-
-    def update_module(self, mod_id, update_col, new_var):  
-        allowed_cols = ["mod_id", "mod_name", "course_id", "year", "welfare_staff_id", "module_staff_id"]
-        if update_col not in allowed_cols:
-            raise ValueError(f"Invalid column name! Allowed: {allowed_cols}")
-
-        try:
-            if update_col == "mod_id":
-                self.cursor.execute("SELECT mod_id FROM module WHERE mod_id = %s;", (new_var,))
-                if self.cursor.fetchone():
-                    raise ValueError(f"Module ID '{new_var}' already exists!")
-
-            query = f"UPDATE module SET `{update_col}` = %s WHERE mod_id = %s;"
-            self.cursor.execute(query, (new_var, mod_id))
-            self.conn.commit()
-            
-            if self.cursor.rowcount > 0:
-                print("Module info updated successfully!")
-            else:
-                print("Module not found!")
-
-        except Exception as e:
-            print("ERROR: ", e)
-    
-class Deadlines:
-
-    def __init__(self, conn=None, cursor=None):
-        if conn and cursor:
-            self.conn = conn
-            self.cursor = cursor
-        else:
-            self.conn, self.cursor = db.make_connection()
-
-    def set_deadlines(self, dead_id, mod_id, week_no, due_date, ass_name = None):
-        try:
-            query = "SELECT * FROM deadlines WHERE dead_id = %s;"
-            self.cursor.execute(query, (dead_id,))
-            existing = self.cursor.fetchone()
-
-            if existing is None:
-                query = "INSERT INTO deadlines (dead_id, mod_id, week_no, due_date, ass_name) VALUES (%s, %s, %s, %s, %s);"
-                self.cursor.execute(query, (dead_id, mod_id, week_no,ass_name, due_date))
+                self.cursor.execute(query, (dead_id, mod_id, week_no, due_date, ass_name))
                 self.conn.commit()
                 print("Deadline set successfully!")
             else:
@@ -882,3 +696,229 @@ class Deadlines:
                 print("Deadline not found!")
         except Exception as e:
             print("ERROR: ", e)
+
+class attendance:
+
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
+
+    def set_attendance(self,stud_id, mod_id, week_no, att_per):
+        try:
+            query = "SELECT 1 FROM attendance WHERE stud_id = %s AND mod_id = %s AND week_no = %s;"
+            self.cursor.execute(query, (stud_id, mod_id, week_no))
+            existing = self.cursor.fetchone()
+
+            if existing is None:
+                query = "INSERT INTO attendance (week_no, mod_id, stud_id, att_per) VALUES (%s, %s, %s, %s);"
+                self.cursor.execute(query, (week_no, mod_id, stud_id, att_per))
+                self.conn.commit()
+                print("Attendance set successfully!")
+            else:
+                print("Attendance already set!")
+        except Exception as e:
+            print("ERROR: ", e)
+        
+    def get_attendance_by_mod_id(self, mod_id):
+        try:
+            query = "SELECT * FROM attendance WHERE mod_id = %s;"
+            self.cursor.execute(query, (mod_id,))
+            attendance = self.cursor.fetchall()
+            if attendance:
+                for att in attendance:
+                    print("Attendance Found!: ", att)
+            else:
+                print("Attendance Not Found for the module id: ", mod_id)
+        except Exception as e:
+            print("ERROR: ", e)
+
+    def get_attendance_by_stud_id(self, stud_id):
+        try:
+            query = "SELECT * FROM attendance WHERE stud_id = %s;"
+            self.cursor.execute(query, (stud_id,))
+            attendance = self.cursor.fetchall()
+            if attendance:
+                for att in attendance:
+                    print("Attendance Found!: ", att)
+            else:
+                print("Attendance Not Found for the student id: ", stud_id)
+        except Exception as e:
+            print("ERROR: ", e)
+
+    def get_attendance_by_week_no(self, week_no):
+        try:
+            query = "SELECT * FROM attendance WHERE week_no = %s;"
+            self.cursor.execute(query, (week_no,))
+            attendance = self.cursor.fetchall()
+            if attendance:
+                for att in attendance:
+                    print("Attendance Found!: ", att)
+            else:
+                print("Attendance Not Found for the week number: ", week_no)
+        except Exception as e:
+            print("ERROR: ", e)
+
+    def update_att_by_stud_id(self, stud_id, update_col, new_var):
+        try:
+            allowed_cols = ["stud_id", "mod_id", "week_no"]
+            if update_col not in allowed_cols:
+                raise ValueError(f"Column {update_col} not found !!")
+    
+            query = f"UPDATE attendance SET `{update_col}` = %s WHERE `stud_id` = %s;"
+            self.cursor.execute(query, (new_var, stud_id))
+            self.conn.commit()
+
+            if self.cursor.rowcount > 0:
+                print("Attendance info updated successfully!")
+            else:
+                print("Attendance not found!")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+class Surveys:
+    def __init__(self, conn=None, cursor=None):
+        if conn and cursor:
+            self.conn = conn
+            self.cursor = cursor
+        else:
+            self.conn, self.cursor = db.make_connection()
+    
+    def set_survey(self, week_no, stud_id, mod_id, stress_levels, hours_slept, comments="NO COMMENTS"):
+        try:
+            query = "SELECT 1 FROM surveys WHERE week_no = %s AND stud_id = %s AND mod_id = %s;"
+            self.cursor.execute(query, (week_no, stud_id, mod_id))
+            existing = self.cursor.fetchone()
+
+            if existing is None:
+                query = "INSERT INTO surveys (week_no, stud_id, mod_id, stress_levels, hours_slept, comments) VALUES (%s, %s, %s, %s, %s, %s);"
+                self.cursor.execute(query, (week_no, stud_id, mod_id, stress_levels, hours_slept, comments))
+                self.conn.commit()
+                print("Survey set successfully!")
+            else:
+                print("Survey already exists for this student, module, and week!")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+    def get_survey_by_stud_id(self, stud_id):
+        try:
+            query = "SELECT * FROM surveys WHERE stud_id = %s;"
+            self.cursor.execute(query, (stud_id,))
+            surveys = self.cursor.fetchall()
+            if surveys:
+                for survey in surveys:
+                    print("Survey Found!: ", survey)
+            else:
+                print(f"No surveys found for student id: {stud_id}")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+    def get_survey_by_mod_id(self, mod_id):
+        try:
+            query = "SELECT * FROM surveys WHERE mod_id = %s;"
+            self.cursor.execute(query, (mod_id,))
+            surveys = self.cursor.fetchall()
+            if surveys:
+                for survey in surveys:
+                    print("Survey Found!: ", survey)
+            else:
+                print(f"No surveys found for module id: {mod_id}")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+    def get_survey_by_week_no(self, week_no):
+        try:
+            query = "SELECT * FROM surveys WHERE week_no = %s;"
+            self.cursor.execute(query, (week_no,))
+            surveys = self.cursor.fetchall()
+            if surveys:
+                for survey in surveys:
+                    print("Survey Found!: ", survey)
+            else:
+                print(f"No surveys found for week number: {week_no}")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+    def get_specific_survey(self, week_no, stud_id, mod_id):
+        try:
+            query = "SELECT * FROM surveys WHERE week_no = %s AND stud_id = %s AND mod_id = %s;"
+            self.cursor.execute(query, (week_no, stud_id, mod_id))
+            survey = self.cursor.fetchone()
+            if survey:
+                print("Survey Found!: ", survey)
+            else:
+                print(f"Survey not found for week {week_no}, student {stud_id}, module {mod_id}")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+    def update_survey(self, week_no, stud_id, mod_id, update_col, new_var):
+        try:
+            allowed_cols = ["stress_levels", "hours_slept", "comments"]
+            if update_col not in allowed_cols:
+                raise ValueError(f"Column {update_col} not allowed for update!")
+            
+            query = f"UPDATE surveys SET `{update_col}` = %s WHERE week_no = %s AND stud_id = %s AND mod_id = %s;"
+            self.cursor.execute(query, (new_var, week_no, stud_id, mod_id))
+            self.conn.commit()
+
+            if self.cursor.rowcount > 0:
+                print(f" {update_col} in survey updated successfully!")
+            else:
+                print(f"Survey not found for week {week_no}, student {stud_id}, module {mod_id}")
+        except Exception as e:
+            print("ERROR: ", e)
+    
+    def delete_survey_by_stud_id(self, stud_id):
+        try:
+            query = "DELETE FROM surveys WHERE stud_id = %s;"
+            self.cursor.execute(query, (stud_id,))
+            self.conn.commit()
+
+            if self.cursor.rowcount > 0:
+                print(f"Surveys for student id: {stud_id} deleted successfully!")
+            else:
+                print(f"No surveys found for student id: {stud_id}")
+        except Exception as e:
+            print("ERROR: ", e)
+
+    def delete_survey_by_mod_id(self, mod_id):
+        try:
+            query = "DELETE FROM surveys WHERE mod_id = %s;"
+            self.cursor.execute(query, (mod_id,))
+            self.conn.commit()
+
+            if self.cursor.rowcount > 0:
+                print(f"Surveys for module id: {mod_id} deleted successfully!")
+            else:
+                print(f"No surveys found for module id: {mod_id}")
+        except Exception as e:
+            print("ERROR: ", e)
+        
+    def delete_survey_by_week_no(self, week_no):
+        try:
+            query = "DELETE FROM surveys WHERE week_no = %s;"
+            self.cursor.execute(query, (week_no,))
+            self.conn.commit()
+
+            if self.cursor.rowcount > 0:
+                print(f"Surveys for week number: {week_no} deleted successfully!")
+            else:
+                print(f"No surveys found for week number: {week_no}")
+        except Exception as e:
+            print("ERROR: ", e)
+
+    def delete_specific_survey(self, week_no, stud_id, mod_id):
+        try:
+            query = "DELETE FROM surveys WHERE week_no = %s AND stud_id = %s AND mod_id = %s;"
+            self.cursor.execute(query, (week_no, stud_id, mod_id))
+            self.conn.commit()
+
+            if self.cursor.rowcount > 0:
+                print("Survey deleted successfully!")
+            else:
+                print("Survey not found!")
+        except Exception as e:
+            print("ERROR: ", e)
+
